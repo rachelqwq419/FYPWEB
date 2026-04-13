@@ -3,221 +3,329 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AS WE LEARN - 學生表現數據分析</title>
+    <title>AS WE LEARN - 終極數據分析中控台</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        :root {
+            --bg-dark: #121215;
+            --bg-panel: #1e1e24;
+            --primary: #9370db;
+            --primary-glow: rgba(147, 112, 219, 0.4);
+            --text-main: #ffffff;
+            --text-sub: #a0a0a0;
+            --danger: #FF5555;
+        }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #1a1a1d;
-            color: #ffffff;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
             margin: 0;
             padding: 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
-        .container {
+        .dashboard-container {
             width: 100%;
-            max-width: 1000px;
-            background-color: #26262b;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+            max-width: 1200px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
-        h1 {
-            color: #dda0dd; /* 淺紫色 */
-            text-align: center;
-            border-bottom: 2px solid #33333b;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-        }
-        .control-panel {
+        /* 頂部導航 */
+        .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            background-color: #33333b;
-            padding: 15px;
-            border-radius: 10px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 15px;
         }
-        select {
-            padding: 10px;
-            font-size: 1rem;
-            border-radius: 5px;
-            border: none;
-            background-color: #1a1a1d;
-            color: white;
-            outline: none;
-            cursor: pointer;
+        .btn-back { color: var(--text-sub); text-decoration: none; font-weight: bold; transition: 0.3s; }
+        .btn-back:hover { color: var(--primary); }
+        .title { color: var(--primary); margin: 0; font-size: 2rem; text-shadow: 0 0 10px var(--primary-glow); }
+        
+        /* KPI 卡片區 */
+        .kpi-row { display: flex; gap: 20px; flex-wrap: wrap; }
+        .kpi-card {
+            flex: 1; min-width: 200px;
+            background-color: var(--bg-panel);
+            padding: 20px; border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+            border-top: 4px solid var(--primary);
+            transition: transform 0.3s;
         }
-        .stats {
-            font-size: 1.1rem;
-            font-weight: bold;
-            color: #9370db;
+        .kpi-card:hover { transform: translateY(-5px); }
+        .kpi-title { font-size: 0.9rem; color: var(--text-sub); margin-bottom: 10px; }
+        .kpi-value { font-size: 1.8rem; font-weight: bold; }
+        .kpi-highlight { color: var(--danger); font-size: 1.2rem;}
+
+        /* 圖表與控制區 */
+        .main-section { display: flex; gap: 20px; flex-wrap: wrap; }
+        .chart-box {
+            flex: 2; min-width: 400px;
+            background-color: var(--bg-panel);
+            padding: 20px; border-radius: 12px;
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
+        .control-box {
+            flex: 1; min-width: 300px;
+            background-color: var(--bg-panel);
+            padding: 20px; border-radius: 12px;
+            display: flex; flex-direction: column; gap: 15px;
         }
-        th, td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid #33333b;
+        
+        /* 表單元素 */
+        label { color: var(--text-sub); font-size: 0.9rem; }
+        select, input {
+            width: 100%; padding: 12px; font-size: 1rem;
+            background-color: var(--bg-dark); color: white;
+            border: 1px solid #444; border-radius: 8px; outline: none;
+            box-sizing: border-box;
         }
-        th {
-            background-color: #1a1a1d;
-            color: #dda0dd;
-            font-weight: bold;
+        select:focus, input:focus { border-color: var(--primary); }
+
+        /* 表格區 */
+        .table-box {
+            background-color: var(--bg-panel);
+            padding: 20px; border-radius: 12px; overflow-x: auto;
         }
-        tr:hover {
-            background-color: #33333b;
-        }
-        .loading {
-            text-align: center;
-            font-size: 1.2rem;
-            color: #a0a0a0;
-            margin: 20px 0;
-        }
-        .btn-back {
-            display: inline-block;
-            margin-bottom: 20px;
-            color: #a0a0a0;
-            text-decoration: none;
-            font-size: 1rem;
-            transition: color 0.3s;
-        }
-        .btn-back:hover {
-            color: #ffffff;
-        }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #333; }
+        th { color: var(--primary); font-weight: bold; position: sticky; top: 0; background: var(--bg-panel); }
+        tr:hover { background-color: rgba(255,255,255,0.05); }
+        
+        .loading { text-align: center; font-size: 1.2rem; color: var(--primary); margin: 50px; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <a href="teacher_portal.html" class="btn-back">← 返回教師後台</a>
-        <h1>📊 學生錯題數據庫 (Error Logs)</h1>
-
-        <div class="control-panel">
-            <div>
-                <label for="studentFilter">篩選學生帳號：</label>
-                <select id="studentFilter">
-                    <option value="ALL">顯示所有學生</option>
-                    </select>
-            </div>
-            <div class="stats" id="recordCount">載入中...</div>
+    <div class="dashboard-container">
+        
+        <div class="header">
+            <a href="teacher_portal.html" class="btn-back">← 返回教師後台</a>
+            <h1 class="title">AS WE LEARN 數據大屏</h1>
+            <div id="statusIndicator" style="color: #4CAF50; font-size: 0.9em;">● 系統已連線</div>
         </div>
 
-        <div id="loading" class="loading">正在從 Google 雲端同步數據...</div>
+        <div id="loading" class="loading">正在從 Google 雲端同步最新數據...</div>
 
-        <table id="dataTable" style="display: none;">
-            <thead>
-                <tr>
-                    <th>時間戳記</th>
-                    <th>學生帳號</th>
-                    <th>答錯題目</th>
-                    <th>錯誤選項</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody">
-                </tbody>
-        </table>
+        <div id="dashboardContent" style="display: none; flex-direction: column; gap: 20px;">
+            
+            <div class="kpi-row">
+                <div class="kpi-card">
+                    <div class="kpi-title">總錯題紀錄數</div>
+                    <div class="kpi-value" id="kpiTotal">-</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">參與測驗人數</div>
+                    <div class="kpi-value" id="kpiStudents">-</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">全班最高頻錯題</div>
+                    <div class="kpi-value kpi-highlight" id="kpiTopError">-</div>
+                </div>
+            </div>
+
+            <div class="main-section">
+                <div class="chart-box">
+                    <h3 style="margin-top: 0; color: #dda0dd;">📊 高頻錯題排行榜</h3>
+                    <canvas id="errorChart" height="100"></canvas>
+                </div>
+                
+                <div class="control-panel control-box">
+                    <h3 style="margin-top: 0; color: #dda0dd;">⚙️ 數據篩選器</h3>
+                    <div>
+                        <label for="studentFilter">👨‍🎓 按學生帳號篩選：</label>
+                        <select id="studentFilter">
+                            <option value="ALL">顯示所有學生 (全班數據)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="searchBox">🔍 關鍵字搜尋 (題目 / 答案)：</label>
+                        <input type="text" id="searchBox" placeholder="輸入關鍵字...">
+                    </div>
+                    <div style="margin-top: auto; font-size: 0.9em; color: gray;">
+                        * 圖表與表格會根據篩選條件即時更新。
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-box">
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>時間戳記</th>
+                            <th>學生帳號</th>
+                            <th>答錯題目</th>
+                            <th>錯誤選項</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+
+        </div>
     </div>
 
     <script>
-		// 直接使用「發佈到網路」嘅 CSV 連結
-		const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSvzNQagZWaguDWjTGY98muI3EqP578fvCVEkl1B-XeWjuYb0v-J198SKqbbQxHA2NamlRxcEitj-ks/pub?gid=643302752&single=true&output=csv';
-		
-		let allData = [];
-		
-		// 使用 PapaParse 讀取 CSV
-		Papa.parse(csvUrl, {
-		    download: true,
-		    header: false, // 🔥 關鍵修改：關閉標題配對，改用純位置讀取 (防禦標題隱形空格)
-		    skipEmptyLines: true,
-		    complete: function(results) {
-		        
-		        // 如果連標題都冇，即係空表
-		        if (results.data.length <= 1) {
-		            document.getElementById('loading').innerText = "⚠️ 成功連接，但表內沒有數據。";
-		            return;
-		        }
-		
-		        // 抽起第一行 (標題)，淨低嘅就係純數據
-		        const rawData = results.data.slice(1);
-		
-		        // 過濾掉 B 欄 (Index 1) 係空嘅行
-		        allData = rawData.filter(row => row[1] && row[1].trim() !== '');
-		
-		        if (allData.length === 0) {
-		            document.getElementById('loading').innerText = "⚠️ 找不到有效的學生數據。";
-		            return;
-		        }
-		
-		        // 成功處理數據，顯示表格
-		        document.getElementById('loading').style.display = 'none';
-		        document.getElementById('dataTable').style.display = 'table';
-		
-		        populateFilter();
-		        renderTable(allData);
-		    },
-		    error: function(error) {
-		        document.getElementById('loading').innerText = "❌ 網絡連線失敗，請確認 CSV 連結正確。";
-		        console.error("Error:", error);
-		    }
-		});
-		
-		// 提取獨立嘅學生帳號並加入 Dropdown
-		function populateFilter() {
-		    const select = document.getElementById('studentFilter');
-		    // row[1] 就係 B 欄「學生帳號」
-		    const uniqueStudents = [...new Set(allData.map(item => item[1]))];
-		
-		    uniqueStudents.forEach(student => {
-		        const option = document.createElement('option');
-		        option.value = student;
-		        option.textContent = student;
-		        select.appendChild(option);
-		    });
-		
-		    // 監聽選擇改變事件
-		    select.addEventListener('change', function() {
-		        if (this.value === 'ALL') {
-		            renderTable(allData);
-		        } else {
-		            const filteredData = allData.filter(row => row[1] === this.value);
-		            renderTable(filteredData);
-		        }
-		    });
-		}
-		
-		// 將數據渲染到表格
-		function renderTable(data) {
-		    const tbody = document.getElementById('tableBody');
-		    const countDisplay = document.getElementById('recordCount');
-		
-		    tbody.innerHTML = ''; // 清空舊數據
-		    countDisplay.innerText = `目前顯示：${data.length} 條錯題紀錄`;
-		
-		    data.forEach(row => {
-		        const tr = document.createElement('tr');
-		
-		        // 根據欄位位置讀取 (A欄=0, B欄=1, C欄=2, D欄=3)
-		        const timeStr = row[0] || '-';
-		        const student = row[1] || '-';
-		        const question = row[2] || '-';
-		        const wrongAns = row[3] || '-';
-		
-		        tr.innerHTML = `
-		            <td style="color: #a0a0a0; font-size: 0.9em;">${timeStr}</td>
-		            <td style="font-weight: bold; color: #ffffff;">${student}</td>
-		            <td>${question}</td>
-		            <td style="color: #FF5555;">${wrongAns}</td>
-		        `;
-		        tbody.appendChild(tr);
-		    });
-		}
-    </script>
+        // 你發佈的 CSV 連結
+        const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSvzNQagZWaguDWjTGY98muI3EqP578fvCVEkl1B-XeWjuYb0v-J198SKqbbQxHA2NamlRxcEitj-ks/pub?gid=643302752&single=true&output=csv';
 
+        let allData = [];
+        let chartInstance = null;
+
+        // 初始化
+        Papa.parse(csvUrl, {
+            download: true, header: false, skipEmptyLines: true,
+            complete: function(results) {
+                if (results.data.length <= 1) {
+                    document.getElementById('loading').innerText = "⚠️ 成功連接，但表內沒有數據。";
+                    return;
+                }
+
+                // 盲讀數據 (避開標題)
+                const rawData = results.data.slice(1);
+                allData = rawData.filter(row => row[1] && row[1].trim() !== '');
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('dashboardContent').style.display = 'flex';
+
+                initDashboard();
+            },
+            error: function(err) {
+                document.getElementById('loading').innerText = "❌ 網絡連線失敗，請檢查 CSV 連結。";
+            }
+        });
+
+        function initDashboard() {
+            populateFilter();
+            updateDashboard(allData); // 初始渲染全部數據
+
+            // 綁定篩選器事件
+            document.getElementById('studentFilter').addEventListener('change', handleFilter);
+            document.getElementById('searchBox').addEventListener('input', handleFilter);
+        }
+
+        function populateFilter() {
+            const select = document.getElementById('studentFilter');
+            const uniqueStudents = [...new Set(allData.map(row => row[1]))];
+            uniqueStudents.forEach(student => {
+                const option = document.createElement('option');
+                option.value = student; option.textContent = student;
+                select.appendChild(option);
+            });
+        }
+
+        // 核心過濾邏輯
+        function handleFilter() {
+            const student = document.getElementById('studentFilter').value;
+            const keyword = document.getElementById('searchBox').value.toLowerCase();
+
+            let filtered = allData;
+            if (student !== 'ALL') filtered = filtered.filter(row => row[1] === student);
+            if (keyword) {
+                filtered = filtered.filter(row => 
+                    (row[2] && row[2].toLowerCase().includes(keyword)) || 
+                    (row[3] && row[3].toLowerCase().includes(keyword))
+                );
+            }
+            updateDashboard(filtered);
+        }
+
+        // 更新整個大屏 (KPI, 圖表, 表格)
+        function updateDashboard(data) {
+            updateKPIs(data);
+            renderTable(data);
+            renderChart(data);
+        }
+
+        // 計算 KPI
+        function updateKPIs(data) {
+            document.getElementById('kpiTotal').innerText = data.length;
+            const uniqueStudents = new Set(data.map(row => row[1])).size;
+            document.getElementById('kpiStudents').innerText = uniqueStudents;
+
+            // 尋找最高頻錯題
+            if (data.length > 0) {
+                const qCounts = {};
+                data.forEach(row => { qCounts[row[2]] = (qCounts[row[2]] || 0) + 1; });
+                const topQ = Object.keys(qCounts).reduce((a, b) => qCounts[a] > qCounts[b] ? a : b);
+                document.getElementById('kpiTopError').innerText = topQ.length > 15 ? topQ.substring(0, 15) + "..." : topQ;
+                document.getElementById('kpiTopError').title = topQ; // Hover 顯示全題
+            } else {
+                document.getElementById('kpiTopError').innerText = "-";
+            }
+        }
+
+        // 渲染表格
+        function renderTable(data) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="color: #a0a0a0; font-size: 0.85em;">${row[0] || '-'}</td>
+                    <td style="font-weight: bold;">${row[1] || '-'}</td>
+                    <td>${row[2] || '-'}</td>
+                    <td style="color: #FF5555;">${row[3] || '-'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 渲染排行榜圖表
+        function renderChart(data) {
+            const ctx = document.getElementById('errorChart').getContext('2d');
+            
+            // 統計每題錯了多少次
+            const qCounts = {};
+            data.forEach(row => { 
+                const q = row[2] || '未知題目';
+                qCounts[q] = (qCounts[q] || 0) + 1; 
+            });
+
+            // 轉換為 Array 並排序 (由高至低)，只取頭 5 題
+            const sortedData = Object.entries(qCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+
+            const labels = sortedData.map(item => item[0].length > 10 ? item[0].substring(0, 10) + '...' : item[0]);
+            const values = sortedData.map(item => item[1]);
+            const fullLabels = sortedData.map(item => item[0]); // 用於 tooltip
+
+            // 如果已有圖表，先銷毀 (防止重疊 Bug)
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '答錯次數',
+                        data: values,
+                        backgroundColor: 'rgba(147, 112, 219, 0.7)',
+                        borderColor: 'rgba(147, 112, 219, 1)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: function(context) { return fullLabels[context[0].dataIndex]; } // Hover 顯示全題
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { color: '#a0a0a0', stepSize: 1 }, grid: { color: '#333' } },
+                        x: { ticks: { color: '#a0a0a0' }, grid: { display: false } }
+                    }
+                }
+            });
+        }
+    </script>
 </body>
 </html>
