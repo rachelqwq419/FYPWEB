@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AS WE LEARN - 學生表現數據分析</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a1d;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            background-color: #26262b;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+        }
+        h1 {
+            color: #dda0dd; /* 淺紫色 */
+            text-align: center;
+            border-bottom: 2px solid #33333b;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .control-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            background-color: #33333b;
+            padding: 15px;
+            border-radius: 10px;
+        }
+        select {
+            padding: 10px;
+            font-size: 1rem;
+            border-radius: 5px;
+            border: none;
+            background-color: #1a1a1d;
+            color: white;
+            outline: none;
+            cursor: pointer;
+        }
+        .stats {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #9370db;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #33333b;
+        }
+        th {
+            background-color: #1a1a1d;
+            color: #dda0dd;
+            font-weight: bold;
+        }
+        tr:hover {
+            background-color: #33333b;
+        }
+        .loading {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #a0a0a0;
+            margin: 20px 0;
+        }
+        .btn-back {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #a0a0a0;
+            text-decoration: none;
+            font-size: 1rem;
+            transition: color 0.3s;
+        }
+        .btn-back:hover {
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <a href="teacher_portal.html" class="btn-back">← 返回教師後台</a>
+        <h1>📊 學生錯題數據庫 (Error Logs)</h1>
+
+        <div class="control-panel">
+            <div>
+                <label for="studentFilter">篩選學生帳號：</label>
+                <select id="studentFilter">
+                    <option value="ALL">顯示所有學生</option>
+                    </select>
+            </div>
+            <div class="stats" id="recordCount">載入中...</div>
+        </div>
+
+        <div id="loading" class="loading">正在從 Google 雲端同步數據...</div>
+
+        <table id="dataTable" style="display: none;">
+            <thead>
+                <tr>
+                    <th>時間戳記</th>
+                    <th>學生帳號</th>
+                    <th>答錯題目</th>
+                    <th>錯誤選項</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                </tbody>
+        </table>
+    </div>
+
+    <script>
+        // 你提供嘅 Google Sheet ID
+        const sheetId = '1lQznqnZYd6M1wQduRenWrJP0ukpXWd1ZiwzPFrxIIaM';
+        // Google Sheet 隱藏嘅 CSV 輸出 API
+        const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
+
+        let allData = [];
+
+        // 使用 PapaParse 讀取 CSV
+        Papa.parse(csvUrl, {
+            download: true,
+            header: true,
+            complete: function(results) {
+                // 過濾掉空行
+                allData = results.data.filter(row => row['學生帳號'] && row['學生帳號'].trim() !== '');
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('dataTable').style.display = 'table';
+                
+                populateFilter();
+                renderTable(allData);
+            },
+            error: function(error) {
+                document.getElementById('loading').innerText = "數據讀取失敗，請確認 Google Sheet 已設定為「知道連結的人都可以查看」。";
+                console.error("Error fetching data:", error);
+            }
+        });
+
+        // 提取獨立嘅學生帳號並加入 Dropdown
+        function populateFilter() {
+            const select = document.getElementById('studentFilter');
+            const uniqueStudents = [...new Set(allData.map(item => item['學生帳號']))];
+            
+            uniqueStudents.forEach(student => {
+                const option = document.createElement('option');
+                option.value = student;
+                option.textContent = student;
+                select.appendChild(option);
+            });
+
+            // 監聽選擇改變事件
+            select.addEventListener('change', function() {
+                if (this.value === 'ALL') {
+                    renderTable(allData);
+                } else {
+                    const filteredData = allData.filter(row => row['學生帳號'] === this.value);
+                    renderTable(filteredData);
+                }
+            });
+        }
+
+        // 將數據渲染到表格
+        function renderTable(data) {
+            const tbody = document.getElementById('tableBody');
+            const countDisplay = document.getElementById('recordCount');
+            
+            tbody.innerHTML = ''; // 清空舊數據
+            countDisplay.innerText = `目前顯示：${data.length} 條錯題紀錄`;
+
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                
+                // 根據你 Sheet 嘅標題名稱讀取
+                const timeStr = row['時間戳記'] || '-';
+                const student = row['學生帳號'] || '-';
+                const question = row['答錯題目'] || '-';
+                const wrongAns = row['錯誤選項'] || '-';
+
+                tr.innerHTML = `
+                    <td style="color: #a0a0a0; font-size: 0.9em;">${timeStr}</td>
+                    <td style="font-weight: bold; color: #ffffff;">${student}</td>
+                    <td>${question}</td>
+                    <td style="color: #FF5555;">${wrongAns}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+    </script>
+
+</body>
+</html>

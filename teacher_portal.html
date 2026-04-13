@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AS WE LEARN - 教師後台</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a1d;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            letter-spacing: 2px;
+        }
+        p {
+            color: #a0a0a0;
+            margin-bottom: 2rem;
+        }
+        .button-container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .btn {
+            background-color: #33333b;
+            color: white;
+            text-decoration: none;
+            padding: 20px 40px;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        /* 各科專屬顏色 Hover 特效 */
+        .btn-chinese:hover { background-color: #FF5555; border-color: #FF9999; transform: translateY(-5px); }
+        .btn-english:hover { background-color: #D4AF37; border-color: #FFFF99; transform: translateY(-5px); }
+        .btn-math:hover { background-color: #4B8BBE; border-color: #99CCFF; transform: translateY(-5px); }
+        
+        /* 🔥 新增：數據分析專屬按鈕特效 */
+        .dashboard-container {
+            width: 100%;
+            max-width: 700px;
+            display: flex;
+            justify-content: center;
+        }
+        .btn-dashboard {
+            background-color: #6a0dad; /* 紫色 */
+            width: 100%;
+            justify-content: center;
+        }
+        .btn-dashboard:hover {
+            background-color: #9370db;
+            border-color: #dda0dd;
+            transform: translateY(-5px);
+        }
+
+        .footer {
+            margin-top: 3rem;
+            font-size: 0.8rem;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>AS WE LEARN</h1>
+    <p>教師專屬題庫管理系統 (Teacher Control Panel)</p>
+
+    <div class="button-container">
+        <a href="https://docs.google.com/forms/d/e/1FAIpQLSd7iWdCedejj6sdjP7lPYOY08ZEpK9DpUapF7Ju9Pq9wdzLPA/viewform?usp=dialog" target="_blank" class="btn btn-chinese">
+            📝 中文科出題
+        </a>
+        
+        <a href="https://docs.google.com/forms/d/e/1FAIpQLSerV71v7rfqXWyXnsOi6agXbuKoks4CIY3njTLwMlLDbbXQFA/viewform?usp=publish-editor" target="_blank" class="btn btn-english">
+            🔡 英文科出題
+        </a>
+        
+        <a href="https://docs.google.com/forms/d/e/1FAIpQLSctkXGABSQpk8STsYI6NpZuUCtkopMjoWdj1sT6KOYY204BnQ/viewform?usp=publish-editor" target="_blank" class="btn btn-math">
+            📐 數學科出題
+        </a>
+    </div>
+
+    <div class="dashboard-container">
+        <a href="你的LookerStudio連結" target="_blank" class="btn btn-dashboard">
+            📊 學生表現數據分析 (Student Performance Dashboard)
+        </a>
+    </div>
+
+    <div class="footer">
+        &copy; 2026 AS WE LEARN Team. All rights reserved.
+    </div>
+
+</body>
+</html>
