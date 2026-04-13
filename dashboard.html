@@ -33,7 +33,6 @@
             flex-direction: column;
             gap: 20px;
         }
-        /* 頂部導航 */
         .header {
             display: flex;
             justify-content: space-between;
@@ -48,7 +47,6 @@
         .btn-back:hover { color: var(--primary); }
         .title { color: var(--primary); margin: 0; font-size: 2rem; text-shadow: 0 0 10px var(--primary-glow); }
         
-        /* 🔥 語言切換按鈕 */
         .btn-lang {
             background-color: #33333b;
             color: white;
@@ -61,7 +59,6 @@
         }
         .btn-lang:hover { background-color: var(--primary); border-color: var(--primary); }
 
-        /* KPI 卡片區 */
         .kpi-row { display: flex; gap: 20px; flex-wrap: wrap; }
         .kpi-card {
             flex: 1; min-width: 200px;
@@ -76,7 +73,6 @@
         .kpi-value { font-size: 1.8rem; font-weight: bold; }
         .kpi-highlight { color: var(--danger); font-size: 1.2rem;}
 
-        /* 圖表與控制區 */
         .main-section { display: flex; gap: 20px; flex-wrap: wrap; }
         .chart-box {
             flex: 2; min-width: 400px;
@@ -90,7 +86,6 @@
             display: flex; flex-direction: column; gap: 15px;
         }
         
-        /* 表單元素 */
         label { color: var(--text-sub); font-size: 0.9rem; margin-bottom: 5px; display: block;}
         select, input {
             width: 100%; padding: 10px; font-size: 1rem;
@@ -100,16 +95,28 @@
         }
         select:focus, input:focus { border-color: var(--primary); }
 
-        /* 表格區 */
         .table-box {
             background-color: var(--bg-panel);
             padding: 20px; border-radius: 12px; overflow-x: auto;
         }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #333; }
-        th { color: var(--primary); font-weight: bold; position: sticky; top: 0; background: var(--bg-panel); }
-        tr:hover { background-color: rgba(255,255,255,0.05); }
         
+        /* 🔥 排序表頭樣式 */
+        th { 
+            color: var(--primary); 
+            font-weight: bold; 
+            position: sticky; 
+            top: 0; 
+            background: var(--bg-panel); 
+            cursor: pointer; 
+            user-select: none;
+            transition: background 0.2s;
+        }
+        th:hover { background: #2a2a30; }
+        .sort-icon { margin-left: 5px; font-size: 0.8em; color: var(--text-sub); }
+
+        tr:hover { background-color: rgba(255,255,255,0.05); }
         .loading { text-align: center; font-size: 1.2rem; color: var(--primary); margin: 50px; }
     </style>
 </head>
@@ -177,13 +184,17 @@
             </div>
 
             <div class="table-box">
-                <table id="dataTable">
+                <table>
                     <thead>
                         <tr>
-                            <th data-i18n="thTime">時間戳記</th>
-                            <th data-i18n="thStudent">學生帳號</th>
-                            <th data-i18n="thQuestion">答錯題目</th>
-                            <th data-i18n="thWrongAns">錯誤選項</th>
+                            <th id="colTime" onclick="requestSort(0)">
+                                <span data-i18n="thTime">時間戳記</span><span class="sort-icon" id="icon0"></span>
+                            </th>
+                            <th id="colStudent" onclick="requestSort(1)">
+                                <span data-i18n="thStudent">學生帳號</span><span class="sort-icon" id="icon1"></span>
+                            </th>
+                            <th><span data-i18n="thQuestion">答錯題目</span></th>
+                            <th><span data-i18n="thWrongAns">錯誤選項</span></th>
                         </tr>
                     </thead>
                     <tbody id="tableBody"></tbody>
@@ -194,130 +205,83 @@
     </div>
 
     <script>
-        // 🌐 多語言字典 (i18n Dictionary)
         const dict = {
             zh: {
-                backBtn: "← 返回教師後台",
-                mainTitle: "AS WE LEARN 數據分析",
-                statusConnected: "● 系統已連線",
-                loadingData: "正在從 Google 雲端同步最新數據...",
-                kpiTotal: "總錯題紀錄數",
-                kpiStudents: "學生遊玩人數",
-                kpiTopError: "最高頻錯題",
-                chartTitle: "📊 高頻錯題排行榜",
-                filterTitle: "⚙️ 數據篩選器",
-                filterClass: "🏫 按班別篩選：",
-                filterStudent: "👨‍🎓 按學生帳號篩選：",
-                filterSearch: "🔍 關鍵字搜尋 (題目 / 答案)：",
-                filterHint: "* 圖表與表格會根據篩選條件即時更新。",
-                thTime: "時間戳記",
-                thStudent: "學生帳號",
-                thQuestion: "答錯題目",
-                thWrongAns: "錯誤選項",
-                optAllClasses: "顯示所有班別 (全校數據)",
-                optAllStudents: "顯示所有學生",
-                searchPlaceholder: "輸入關鍵字...",
-                independent: "獨立帳號 (無班別)",
-                noData: "⚠️ 成功連接，但表內沒有數據。",
-                netError: "❌ 網絡連線失敗，請檢查 CSV 連結。",
-                chartLabel: "答錯次數"
+                backBtn: "← 返回教師後台", mainTitle: "AS WE LEARN 數據分析", statusConnected: "● 系統已連線",
+                loadingData: "正在從 Google 雲端同步最新數據...", kpiTotal: "總錯題紀錄數", kpiStudents: "學生遊玩人數",
+                kpiTopError: "最高頻錯題", chartTitle: "📊 高頻錯題排行榜", filterTitle: "⚙️ 數據篩選器",
+                filterClass: "🏫 按班別篩選：", filterStudent: "👨‍🎓 按學生帳號篩選：", filterSearch: "🔍 關鍵字搜尋 (題目 / 答案)：",
+                filterHint: "* 圖表與表格會根據篩選條件即時更新。", thTime: "時間戳記", thStudent: "學生帳號",
+                thQuestion: "答錯題目", thWrongAns: "錯誤選項", optAllClasses: "顯示所有班別 (全校數據)",
+                optAllStudents: "顯示所有學生", searchPlaceholder: "輸入關鍵字...", independent: "獨立帳號 (無班別)",
+                noData: "⚠️ 成功連接，但表內沒有數據。", netError: "❌ 網絡連線失敗，請檢查 CSV 連結。", chartLabel: "答錯次數"
             },
             en: {
-                backBtn: "← Back to Portal",
-                mainTitle: "AS WE LEARN Analytics",
-                statusConnected: "● System Online",
-                loadingData: "Syncing data from Google Cloud...",
-                kpiTotal: "Total Error Records",
-                kpiStudents: "Active Students",
-                kpiTopError: "Most Frequent Error",
-                chartTitle: "📊 Top Errors Leaderboard",
-                filterTitle: "⚙️ Data Filters",
-                filterClass: "🏫 Filter by Class:",
-                filterStudent: "👨‍🎓 Filter by Student:",
-                filterSearch: "🔍 Keyword Search (Q&A):",
-                filterHint: "* Charts and tables update instantly based on filters.",
-                thTime: "Timestamp",
-                thStudent: "Student ID",
-                thQuestion: "Question",
-                thWrongAns: "Wrong Answer",
-                optAllClasses: "All Classes (School Data)",
-                optAllStudents: "All Students",
-                searchPlaceholder: "Enter keywords...",
-                independent: "Independent (No Class)",
-                noData: "⚠️ Connected, but no data available.",
-                netError: "❌ Connection failed, check CSV link.",
-                chartLabel: "Error Count"
+                backBtn: "← Back to Portal", mainTitle: "AS WE LEARN Analytics", statusConnected: "● System Online",
+                loadingData: "Syncing data from Google Cloud...", kpiTotal: "Total Error Records", kpiStudents: "Active Students",
+                kpiTopError: "Most Frequent Error", chartTitle: "📊 Top Errors Leaderboard", filterTitle: "⚙️ Data Filters",
+                filterClass: "🏫 Filter by Class:", filterStudent: "👨‍🎓 Filter by Student:", filterSearch: "🔍 Keyword Search (Q&A):",
+                filterHint: "* Charts and tables update instantly based on filters.", thTime: "Timestamp", thStudent: "Student ID",
+                thQuestion: "Question", thWrongAns: "Wrong Answer", optAllClasses: "All Classes (School Data)",
+                optAllStudents: "All Students", searchPlaceholder: "Enter keywords...", independent: "Independent (No Class)",
+                noData: "⚠️ Connected, but no data available.", netError: "❌ Connection failed, check CSV link.", chartLabel: "Error Count"
             }
         };
 
-        let currentLang = 'zh'; // 預設語言
-
+        let currentLang = 'zh';
         const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSvzNQagZWaguDWjTGY98muI3EqP578fvCVEkl1B-XeWjuYb0v-J198SKqbbQxHA2NamlRxcEitj-ks/pub?gid=643302752&single=true&output=csv';
 
         let allData = [];
         let chartInstance = null;
+        
+        // 🔥 排序狀態
+        let currentSort = { index: null, direction: 'asc' };
 
-        // 切換語言功能
         function toggleLanguage() {
             currentLang = currentLang === 'zh' ? 'en' : 'zh';
             document.getElementById('langToggle').innerText = currentLang === 'zh' ? '🌐 EN' : '🌐 中文';
-            
-            // 更新靜態文字
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.getAttribute('data-i18n');
                 if (dict[currentLang][key]) el.innerText = dict[currentLang][key];
             });
             document.getElementById('searchBox').placeholder = dict[currentLang].searchPlaceholder;
-
-            // 重新渲染動態數據 (保留當前篩選狀態)
             if (allData.length > 0) {
-                const currentClass = document.getElementById('classFilter').value;
-                const currentStudent = document.getElementById('studentFilter').value;
-                
+                const curClass = document.getElementById('classFilter').value;
+                const curStudent = document.getElementById('studentFilter').value;
                 populateClassFilter();
-                document.getElementById('classFilter').value = currentClass; 
-                
-                updateStudentDropdown(currentClass);
-                document.getElementById('studentFilter').value = currentStudent; 
-                
-                handleFilter(); // 更新圖表與表格語言
+                document.getElementById('classFilter').value = curClass;
+                updateStudentDropdown(curClass);
+                document.getElementById('studentFilter').value = curStudent;
+                handleFilter();
             }
         }
 
-        function getClassFromStudent(studentAccount) {
-            if (!studentAccount) return "UNKNOWN";
-            const parts = studentAccount.split('_');
-            return parts.length > 1 ? parts[0] : "INDEPENDENT";
+        function getClassFromStudent(acc) {
+            if (!acc) return "UNKNOWN";
+            const p = acc.split('_');
+            return p.length > 1 ? p[0] : "INDEPENDENT";
         }
 
-        // 讀取數據
         Papa.parse(csvUrl, {
             download: true, header: false, skipEmptyLines: true,
-            complete: function(results) {
-                if (results.data.length <= 1) {
+            complete: function(res) {
+                if (res.data.length <= 1) {
                     document.getElementById('loading').innerText = dict[currentLang].noData;
                     return;
                 }
-
-                const rawData = results.data.slice(1);
-                allData = rawData.filter(row => row[1] && row[1].trim() !== '');
-
+                const raw = res.data.slice(1);
+                allData = raw.filter(r => r[1] && r[1].trim() !== '');
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('dashboardContent').style.display = 'flex';
-
                 initDashboard();
             },
-            error: function(err) {
-                document.getElementById('loading').innerText = dict[currentLang].netError;
-            }
+            error: function() { document.getElementById('loading').innerText = dict[currentLang].netError; }
         });
 
         function initDashboard() {
-            // 初始化靜態語言
-            toggleLanguage(); toggleLanguage(); // 觸發一次更新
-
-            populateClassFilter(); 
-            updateStudentDropdown('ALL'); 
+            toggleLanguage(); toggleLanguage();
+            populateClassFilter();
+            updateStudentDropdown('ALL');
             updateDashboard(allData);
 
             document.getElementById('classFilter').addEventListener('change', function() {
@@ -329,57 +293,70 @@
         }
 
         function populateClassFilter() {
-            const classSelect = document.getElementById('classFilter');
-            classSelect.innerHTML = `<option value="ALL">${dict[currentLang].optAllClasses}</option>`;
-
-            const uniqueClasses = [...new Set(allData.map(row => getClassFromStudent(row[1])))].sort();
-            uniqueClasses.forEach(cls => {
-                const option = document.createElement('option');
-                option.value = cls; 
-                option.textContent = cls === "INDEPENDENT" ? dict[currentLang].independent : cls;
-                classSelect.appendChild(option);
+            const sel = document.getElementById('classFilter');
+            sel.innerHTML = `<option value="ALL">${dict[currentLang].optAllClasses}</option>`;
+            const u = [...new Set(allData.map(r => getClassFromStudent(r[1])))].sort();
+            u.forEach(c => {
+                const o = document.createElement('option');
+                o.value = c; o.textContent = c === "INDEPENDENT" ? dict[currentLang].independent : c;
+                sel.appendChild(o);
             });
         }
 
-        function updateStudentDropdown(selectedClass) {
-            const studentSelect = document.getElementById('studentFilter');
-            studentSelect.innerHTML = `<option value="ALL">${dict[currentLang].optAllStudents}</option>`; 
-
-            let validStudents = allData;
-            if (selectedClass !== 'ALL') {
-                validStudents = allData.filter(row => getClassFromStudent(row[1]) === selectedClass);
-            }
-
-            const uniqueStudents = [...new Set(validStudents.map(row => row[1]))].sort();
-            uniqueStudents.forEach(student => {
-                const option = document.createElement('option');
-                option.value = student; 
-                option.textContent = student;
-                studentSelect.appendChild(option);
+        function updateStudentDropdown(cls) {
+            const sel = document.getElementById('studentFilter');
+            sel.innerHTML = `<option value="ALL">${dict[currentLang].optAllStudents}</option>`;
+            let filtered = cls === 'ALL' ? allData : allData.filter(r => getClassFromStudent(r[1]) === cls);
+            const u = [...new Set(filtered.map(r => r[1]))].sort();
+            u.forEach(s => {
+                const o = document.createElement('option');
+                o.value = s; o.textContent = s;
+                sel.appendChild(o);
             });
+        }
+
+        // 🔥 排序處理函數
+        function requestSort(index) {
+            if (currentSort.index === index) {
+                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSort.index = index;
+                currentSort.direction = 'asc';
+            }
+            updateSortIcons();
+            handleFilter();
+        }
+
+        function updateSortIcons() {
+            document.querySelectorAll('.sort-icon').forEach(el => el.innerText = '');
+            if (currentSort.index !== null) {
+                const icon = document.getElementById('icon' + currentSort.index);
+                if (icon) icon.innerText = currentSort.direction === 'asc' ? ' ▲' : ' ▼';
+            }
         }
 
         function handleFilter() {
-            const selectedClass = document.getElementById('classFilter').value;
-            const selectedStudent = document.getElementById('studentFilter').value;
-            const keyword = document.getElementById('searchBox').value.toLowerCase();
+            const cls = document.getElementById('classFilter').value;
+            const stu = document.getElementById('studentFilter').value;
+            const key = document.getElementById('searchBox').value.toLowerCase();
 
-            let filtered = allData;
+            let data = allData;
+            if (cls !== 'ALL') data = data.filter(r => getClassFromStudent(r[1]) === cls);
+            if (stu !== 'ALL') data = data.filter(r => r[1] === stu);
+            if (key) data = data.filter(r => (r[2] && r[2].toLowerCase().includes(key)) || (r[3] && r[3].toLowerCase().includes(key)));
 
-            if (selectedClass !== 'ALL') {
-                filtered = filtered.filter(row => getClassFromStudent(row[1]) === selectedClass);
-            }
-            if (selectedStudent !== 'ALL') {
-                filtered = filtered.filter(row => row[1] === selectedStudent);
-            }
-            if (keyword) {
-                filtered = filtered.filter(row => 
-                    (row[2] && row[2].toLowerCase().includes(keyword)) || 
-                    (row[3] && row[3].toLowerCase().includes(keyword))
-                );
+            // 🔥 執行排序
+            if (currentSort.index !== null) {
+                data.sort((a, b) => {
+                    let valA = (a[currentSort.index] || "").toString();
+                    let valB = (b[currentSort.index] || "").toString();
+                    return currentSort.direction === 'asc' 
+                        ? valA.localeCompare(valB, undefined, {numeric: true}) 
+                        : valB.localeCompare(valA, undefined, {numeric: true});
+                });
             }
 
-            updateDashboard(filtered);
+            updateDashboard(data);
         }
 
         function updateDashboard(data) {
@@ -390,77 +367,47 @@
 
         function updateKPIs(data) {
             document.getElementById('kpiTotal').innerText = data.length;
-            const uniqueStudents = new Set(data.map(row => row[1])).size;
-            document.getElementById('kpiStudents').innerText = uniqueStudents;
-
+            document.getElementById('kpiStudents').innerText = new Set(data.map(r => r[1])).size;
             if (data.length > 0) {
-                const qCounts = {};
-                data.forEach(row => { qCounts[row[2]] = (qCounts[row[2]] || 0) + 1; });
-                const topQ = Object.keys(qCounts).reduce((a, b) => qCounts[a] > qCounts[b] ? a : b);
-                document.getElementById('kpiTopError').innerText = topQ.length > 15 ? topQ.substring(0, 15) + "..." : topQ;
-                document.getElementById('kpiTopError').title = topQ; 
-            } else {
-                document.getElementById('kpiTopError').innerText = "-";
-            }
+                const c = {}; data.forEach(r => { c[r[2]] = (c[r[2]] || 0) + 1; });
+                const top = Object.keys(c).reduce((a, b) => c[a] > c[b] ? a : b);
+                document.getElementById('kpiTopError').innerText = top.length > 15 ? top.substring(0, 15) + "..." : top;
+                document.getElementById('kpiTopError').title = top;
+            } else { document.getElementById('kpiTopError').innerText = "-"; }
         }
 
         function renderTable(data) {
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '';
-            data.forEach(row => {
+            const tb = document.getElementById('tableBody');
+            tb.innerHTML = '';
+            data.forEach(r => {
                 const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td style="color: #a0a0a0; font-size: 0.85em;">${row[0] || '-'}</td>
-                    <td style="font-weight: bold;">${row[1] || '-'}</td>
-                    <td>${row[2] || '-'}</td>
-                    <td style="color: #FF5555;">${row[3] || '-'}</td>
-                `;
-                tbody.appendChild(tr);
+                tr.innerHTML = `<td style="color: #a0a0a0; font-size: 0.85em;">${r[0] || '-'}</td><td style="font-weight: bold;">${r[1] || '-'}</td><td>${r[2] || '-'}</td><td style="color: #FF5555;">${r[3] || '-'}</td>`;
+                tb.appendChild(tr);
             });
         }
 
         function renderChart(data) {
             const ctx = document.getElementById('errorChart').getContext('2d');
-            
-            const qCounts = {};
-            data.forEach(row => { 
-                const q = row[2] || '未知題目';
-                qCounts[q] = (qCounts[q] || 0) + 1; 
-            });
-
-            const sortedData = Object.entries(qCounts)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 5);
-
-            const labels = sortedData.map(item => item[0].length > 10 ? item[0].substring(0, 10) + '...' : item[0]);
-            const values = sortedData.map(item => item[1]);
-            const fullLabels = sortedData.map(item => item[0]);
+            const c = {}; data.forEach(r => { const q = r[2] || '未知'; c[q] = (c[q] || 0) + 1; });
+            const s = Object.entries(c).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            const lab = s.map(i => i[0].length > 10 ? i[0].substring(0, 10) + '...' : i[0]);
+            const val = s.map(i => i[1]);
+            const full = s.map(i => i[0]);
 
             if (chartInstance) chartInstance.destroy();
-
             chartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: labels,
+                    labels: lab,
                     datasets: [{
-                        label: dict[currentLang].chartLabel, // 🔥 圖表標籤跟隨語言
-                        data: values,
-                        backgroundColor: 'rgba(147, 112, 219, 0.7)',
-                        borderColor: 'rgba(147, 112, 219, 1)',
-                        borderWidth: 1,
-                        borderRadius: 4
+                        label: dict[currentLang].chartLabel, data: val,
+                        backgroundColor: 'rgba(147, 112, 219, 0.7)', borderColor: 'rgba(147, 112, 219, 1)',
+                        borderWidth: 1, borderRadius: 4
                     }]
                 },
                 options: {
                     responsive: true,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                title: function(context) { return fullLabels[context[0].dataIndex]; } 
-                            }
-                        }
-                    },
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { title: (ctx) => full[ctx[0].dataIndex] } } },
                     scales: {
                         y: { beginAtZero: true, ticks: { color: '#a0a0a0', stepSize: 1 }, grid: { color: '#333' } },
                         x: { ticks: { color: '#a0a0a0' }, grid: { display: false } }
