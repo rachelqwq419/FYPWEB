@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AS WE LEARN - 分析控台</title>
+    <title>AS WE LEARN - Dashboard</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -41,10 +41,26 @@
             border-bottom: 2px solid #333;
             padding-bottom: 15px;
         }
+        .header-left { display: flex; align-items: center; gap: 20px; }
+        .header-right { display: flex; align-items: center; gap: 15px; }
+        
         .btn-back { color: var(--text-sub); text-decoration: none; font-weight: bold; transition: 0.3s; }
         .btn-back:hover { color: var(--primary); }
         .title { color: var(--primary); margin: 0; font-size: 2rem; text-shadow: 0 0 10px var(--primary-glow); }
         
+        /* 🔥 語言切換按鈕 */
+        .btn-lang {
+            background-color: #33333b;
+            color: white;
+            border: 1px solid #444;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .btn-lang:hover { background-color: var(--primary); border-color: var(--primary); }
+
         /* KPI 卡片區 */
         .kpi-row { display: flex; gap: 20px; flex-wrap: wrap; }
         .kpi-card {
@@ -102,58 +118,59 @@
     <div class="dashboard-container">
         
         <div class="header">
-            <a href="teacher_portal.html" class="btn-back">← 返回教師後台</a>
-            <h1 class="title">AS WE LEARN 數據分析</h1>
-            <div id="statusIndicator" style="color: #4CAF50; font-size: 0.9em;">● 系統已連線</div>
+            <div class="header-left">
+                <a href="teacher_portal.html" class="btn-back" data-i18n="backBtn">← 返回教師後台</a>
+                <h1 class="title" data-i18n="mainTitle">AS WE LEARN 數據分析</h1>
+            </div>
+            <div class="header-right">
+                <div id="statusIndicator" style="color: #4CAF50; font-size: 0.9em;" data-i18n="statusConnected">● 系統已連線</div>
+                <button class="btn-lang" id="langToggle" onclick="toggleLanguage()">🌐 EN</button>
+            </div>
         </div>
 
-        <div id="loading" class="loading">正在從 Google 雲端同步最新數據...</div>
+        <div id="loading" class="loading" data-i18n="loadingData">正在從 Google 雲端同步最新數據...</div>
 
         <div id="dashboardContent" style="display: none; flex-direction: column; gap: 20px;">
             
             <div class="kpi-row">
                 <div class="kpi-card">
-                    <div class="kpi-title">總錯題紀錄數</div>
+                    <div class="kpi-title" data-i18n="kpiTotal">總錯題紀錄數</div>
                     <div class="kpi-value" id="kpiTotal">-</div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-title">學生遊玩人數</div>
+                    <div class="kpi-title" data-i18n="kpiStudents">學生遊玩人數</div>
                     <div class="kpi-value" id="kpiStudents">-</div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-title">最高頻錯題</div>
+                    <div class="kpi-title" data-i18n="kpiTopError">最高頻錯題</div>
                     <div class="kpi-value kpi-highlight" id="kpiTopError">-</div>
                 </div>
             </div>
 
             <div class="main-section">
                 <div class="chart-box">
-                    <h3 style="margin-top: 0; color: #dda0dd;">📊 高頻錯題排行榜</h3>
+                    <h3 style="margin-top: 0; color: #dda0dd;" data-i18n="chartTitle">📊 高頻錯題排行榜</h3>
                     <canvas id="errorChart" height="100"></canvas>
                 </div>
                 
                 <div class="control-panel control-box">
-                    <h3 style="margin-top: 0; color: #dda0dd;">⚙️ 數據篩選器</h3>
+                    <h3 style="margin-top: 0; color: #dda0dd;" data-i18n="filterTitle">⚙️ 數據篩選器</h3>
                     
                     <div>
-                        <label for="classFilter">🏫 按班別篩選：</label>
-                        <select id="classFilter">
-                            <option value="ALL">顯示所有班別 (全校數據)</option>
-                        </select>
+                        <label for="classFilter" data-i18n="filterClass">🏫 按班別篩選：</label>
+                        <select id="classFilter"></select>
                     </div>
 
                     <div>
-                        <label for="studentFilter">👨‍🎓 按學生帳號篩選：</label>
-                        <select id="studentFilter">
-                            <option value="ALL">顯示所有學生</option>
-                        </select>
+                        <label for="studentFilter" data-i18n="filterStudent">👨‍🎓 按學生帳號篩選：</label>
+                        <select id="studentFilter"></select>
                     </div>
 
                     <div>
-                        <label for="searchBox">🔍 關鍵字搜尋 (題目 / 答案)：</label>
+                        <label for="searchBox" data-i18n="filterSearch">🔍 關鍵字搜尋 (題目 / 答案)：</label>
                         <input type="text" id="searchBox" placeholder="輸入關鍵字...">
                     </div>
-                    <div style="margin-top: auto; font-size: 0.85em; color: gray;">
+                    <div style="margin-top: auto; font-size: 0.85em; color: gray;" data-i18n="filterHint">
                         * 圖表與表格會根據篩選條件即時更新。
                     </div>
                 </div>
@@ -163,10 +180,10 @@
                 <table id="dataTable">
                     <thead>
                         <tr>
-                            <th>時間戳記</th>
-                            <th>學生帳號</th>
-                            <th>答錯題目</th>
-                            <th>錯誤選項</th>
+                            <th data-i18n="thTime">時間戳記</th>
+                            <th data-i18n="thStudent">學生帳號</th>
+                            <th data-i18n="thQuestion">答錯題目</th>
+                            <th data-i18n="thWrongAns">錯誤選項</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody"></tbody>
@@ -177,23 +194,108 @@
     </div>
 
     <script>
+        // 🌐 多語言字典 (i18n Dictionary)
+        const dict = {
+            zh: {
+                backBtn: "← 返回教師後台",
+                mainTitle: "AS WE LEARN 數據分析",
+                statusConnected: "● 系統已連線",
+                loadingData: "正在從 Google 雲端同步最新數據...",
+                kpiTotal: "總錯題紀錄數",
+                kpiStudents: "學生遊玩人數",
+                kpiTopError: "最高頻錯題",
+                chartTitle: "📊 高頻錯題排行榜",
+                filterTitle: "⚙️ 數據篩選器",
+                filterClass: "🏫 按班別篩選：",
+                filterStudent: "👨‍🎓 按學生帳號篩選：",
+                filterSearch: "🔍 關鍵字搜尋 (題目 / 答案)：",
+                filterHint: "* 圖表與表格會根據篩選條件即時更新。",
+                thTime: "時間戳記",
+                thStudent: "學生帳號",
+                thQuestion: "答錯題目",
+                thWrongAns: "錯誤選項",
+                optAllClasses: "顯示所有班別 (全校數據)",
+                optAllStudents: "顯示所有學生",
+                searchPlaceholder: "輸入關鍵字...",
+                independent: "獨立帳號 (無班別)",
+                noData: "⚠️ 成功連接，但表內沒有數據。",
+                netError: "❌ 網絡連線失敗，請檢查 CSV 連結。",
+                chartLabel: "答錯次數"
+            },
+            en: {
+                backBtn: "← Back to Portal",
+                mainTitle: "AS WE LEARN Analytics",
+                statusConnected: "● System Online",
+                loadingData: "Syncing data from Google Cloud...",
+                kpiTotal: "Total Error Records",
+                kpiStudents: "Active Students",
+                kpiTopError: "Most Frequent Error",
+                chartTitle: "📊 Top Errors Leaderboard",
+                filterTitle: "⚙️ Data Filters",
+                filterClass: "🏫 Filter by Class:",
+                filterStudent: "👨‍🎓 Filter by Student:",
+                filterSearch: "🔍 Keyword Search (Q&A):",
+                filterHint: "* Charts and tables update instantly based on filters.",
+                thTime: "Timestamp",
+                thStudent: "Student ID",
+                thQuestion: "Question",
+                thWrongAns: "Wrong Answer",
+                optAllClasses: "All Classes (School Data)",
+                optAllStudents: "All Students",
+                searchPlaceholder: "Enter keywords...",
+                independent: "Independent (No Class)",
+                noData: "⚠️ Connected, but no data available.",
+                netError: "❌ Connection failed, check CSV link.",
+                chartLabel: "Error Count"
+            }
+        };
+
+        let currentLang = 'zh'; // 預設語言
+
         const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSvzNQagZWaguDWjTGY98muI3EqP578fvCVEkl1B-XeWjuYb0v-J198SKqbbQxHA2NamlRxcEitj-ks/pub?gid=643302752&single=true&output=csv';
 
         let allData = [];
         let chartInstance = null;
 
-        // 工具函數：從學生帳號提取班別 (例如從 "1A_02_Wong" 提取 "1A")
-        function getClassFromStudent(studentAccount) {
-            if (!studentAccount) return "未知";
-            const parts = studentAccount.split('_');
-            return parts.length > 1 ? parts[0] : "獨立帳號 (無班別)";
+        // 切換語言功能
+        function toggleLanguage() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            document.getElementById('langToggle').innerText = currentLang === 'zh' ? '🌐 EN' : '🌐 中文';
+            
+            // 更新靜態文字
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (dict[currentLang][key]) el.innerText = dict[currentLang][key];
+            });
+            document.getElementById('searchBox').placeholder = dict[currentLang].searchPlaceholder;
+
+            // 重新渲染動態數據 (保留當前篩選狀態)
+            if (allData.length > 0) {
+                const currentClass = document.getElementById('classFilter').value;
+                const currentStudent = document.getElementById('studentFilter').value;
+                
+                populateClassFilter();
+                document.getElementById('classFilter').value = currentClass; 
+                
+                updateStudentDropdown(currentClass);
+                document.getElementById('studentFilter').value = currentStudent; 
+                
+                handleFilter(); // 更新圖表與表格語言
+            }
         }
 
+        function getClassFromStudent(studentAccount) {
+            if (!studentAccount) return "UNKNOWN";
+            const parts = studentAccount.split('_');
+            return parts.length > 1 ? parts[0] : "INDEPENDENT";
+        }
+
+        // 讀取數據
         Papa.parse(csvUrl, {
             download: true, header: false, skipEmptyLines: true,
             complete: function(results) {
                 if (results.data.length <= 1) {
-                    document.getElementById('loading').innerText = "⚠️ 成功連接，但表內沒有數據。";
+                    document.getElementById('loading').innerText = dict[currentLang].noData;
                     return;
                 }
 
@@ -206,18 +308,19 @@
                 initDashboard();
             },
             error: function(err) {
-                document.getElementById('loading').innerText = "❌ 網絡連線失敗，請檢查 CSV 連結。";
+                document.getElementById('loading').innerText = dict[currentLang].netError;
             }
         });
 
         function initDashboard() {
-            populateClassFilter(); // 先填入所有班別
-            updateStudentDropdown('ALL'); // 填入所有學生
+            // 初始化靜態語言
+            toggleLanguage(); toggleLanguage(); // 觸發一次更新
+
+            populateClassFilter(); 
+            updateStudentDropdown('ALL'); 
             updateDashboard(allData);
 
-            // 綁定事件
             document.getElementById('classFilter').addEventListener('change', function() {
-                // 當班別改變時，更新學生清單，並重置學生選擇
                 updateStudentDropdown(this.value);
                 handleFilter();
             });
@@ -225,23 +328,22 @@
             document.getElementById('searchBox').addEventListener('input', handleFilter);
         }
 
-        // 填入班別 Dropdown
         function populateClassFilter() {
             const classSelect = document.getElementById('classFilter');
+            classSelect.innerHTML = `<option value="ALL">${dict[currentLang].optAllClasses}</option>`;
+
             const uniqueClasses = [...new Set(allData.map(row => getClassFromStudent(row[1])))].sort();
-            
             uniqueClasses.forEach(cls => {
                 const option = document.createElement('option');
                 option.value = cls; 
-                option.textContent = cls;
+                option.textContent = cls === "INDEPENDENT" ? dict[currentLang].independent : cls;
                 classSelect.appendChild(option);
             });
         }
 
-        // 動態更新學生 Dropdown (聯動效果)
         function updateStudentDropdown(selectedClass) {
             const studentSelect = document.getElementById('studentFilter');
-            studentSelect.innerHTML = '<option value="ALL">顯示所有學生</option>'; // 清空並重置
+            studentSelect.innerHTML = `<option value="ALL">${dict[currentLang].optAllStudents}</option>`; 
 
             let validStudents = allData;
             if (selectedClass !== 'ALL') {
@@ -257,7 +359,6 @@
             });
         }
 
-        // 核心過濾邏輯 (結合班別、學生、關鍵字)
         function handleFilter() {
             const selectedClass = document.getElementById('classFilter').value;
             const selectedStudent = document.getElementById('studentFilter').value;
@@ -265,17 +366,12 @@
 
             let filtered = allData;
 
-            // 1. 班別篩選
             if (selectedClass !== 'ALL') {
                 filtered = filtered.filter(row => getClassFromStudent(row[1]) === selectedClass);
             }
-
-            // 2. 學生篩選
             if (selectedStudent !== 'ALL') {
                 filtered = filtered.filter(row => row[1] === selectedStudent);
             }
-
-            // 3. 關鍵字搜尋
             if (keyword) {
                 filtered = filtered.filter(row => 
                     (row[2] && row[2].toLowerCase().includes(keyword)) || 
@@ -347,7 +443,7 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: '答錯次數',
+                        label: dict[currentLang].chartLabel, // 🔥 圖表標籤跟隨語言
                         data: values,
                         backgroundColor: 'rgba(147, 112, 219, 0.7)',
                         borderColor: 'rgba(147, 112, 219, 1)',
