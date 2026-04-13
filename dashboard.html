@@ -125,93 +125,97 @@
     </div>
 
     <script>
-		// 直接使用「發佈到網路」嘅 CSV 連結 (如果換咗新 Link 記得改呢度)
+		// 直接使用「發佈到網路」嘅 CSV 連結
 		const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSvzNQagZWaguDWjTGY98muI3EqP578fvCVEkl1B-XeWjuYb0v-J198SKqbbQxHA2NamlRxcEitj-ks/pub?gid=643302752&single=true&output=csv';
-
+		
 		let allData = [];
-
+		
 		// 使用 PapaParse 讀取 CSV
 		Papa.parse(csvUrl, {
-			download: true,
-			header: true,
-			skipEmptyLines: true, // 🔥 自動跳過空行，防止報錯
-			complete: function(results) {
-				console.log("成功獲取數據：", results.data); // 留畀自己 debug 用
-
-				// 檢查是否成功讀取到「學生帳號」標題 (防止發佈錯分頁)
-				if (results.data.length > 0 && !results.data[0].hasOwnProperty('學生帳號')) {
-					document.getElementById('loading').innerText = "❌ 讀取成功，但找不到「學生帳號」欄位！請確認發佈的分頁是否正確。";
-					return;
-				}
-
-				// 過濾掉空行
-				allData = results.data.filter(row => row['學生帳號'] && row['學生帳號'].trim() !== '');
-				
-				if (allData.length === 0) {
-					document.getElementById('loading').innerText = "⚠️ 成功連接，但表內沒有數據。";
-					return;
-				}
-				
-				document.getElementById('loading').style.display = 'none';
-				document.getElementById('dataTable').style.display = 'table';
-				
-				populateFilter();
-				renderTable(allData);
-			},
-			error: function(error) {
-				document.getElementById('loading').innerText = "❌ 網絡連線失敗，請確認 CSV 連結正確。";
-				console.error("Error fetching data:", error);
-			}
+		    download: true,
+		    header: false, // 🔥 關鍵修改：關閉標題配對，改用純位置讀取 (防禦標題隱形空格)
+		    skipEmptyLines: true,
+		    complete: function(results) {
+		        
+		        // 如果連標題都冇，即係空表
+		        if (results.data.length <= 1) {
+		            document.getElementById('loading').innerText = "⚠️ 成功連接，但表內沒有數據。";
+		            return;
+		        }
+		
+		        // 抽起第一行 (標題)，淨低嘅就係純數據
+		        const rawData = results.data.slice(1);
+		
+		        // 過濾掉 B 欄 (Index 1) 係空嘅行
+		        allData = rawData.filter(row => row[1] && row[1].trim() !== '');
+		
+		        if (allData.length === 0) {
+		            document.getElementById('loading').innerText = "⚠️ 找不到有效的學生數據。";
+		            return;
+		        }
+		
+		        // 成功處理數據，顯示表格
+		        document.getElementById('loading').style.display = 'none';
+		        document.getElementById('dataTable').style.display = 'table';
+		
+		        populateFilter();
+		        renderTable(allData);
+		    },
+		    error: function(error) {
+		        document.getElementById('loading').innerText = "❌ 網絡連線失敗，請確認 CSV 連結正確。";
+		        console.error("Error:", error);
+		    }
 		});
-
+		
 		// 提取獨立嘅學生帳號並加入 Dropdown
 		function populateFilter() {
-			const select = document.getElementById('studentFilter');
-			const uniqueStudents = [...new Set(allData.map(item => item['學生帳號']))];
-			
-			uniqueStudents.forEach(student => {
-				const option = document.createElement('option');
-				option.value = student;
-				option.textContent = student;
-				select.appendChild(option);
-			});
-
-			// 監聽選擇改變事件
-			select.addEventListener('change', function() {
-				if (this.value === 'ALL') {
-					renderTable(allData);
-				} else {
-					const filteredData = allData.filter(row => row['學生帳號'] === this.value);
-					renderTable(filteredData);
-				}
-			});
+		    const select = document.getElementById('studentFilter');
+		    // row[1] 就係 B 欄「學生帳號」
+		    const uniqueStudents = [...new Set(allData.map(item => item[1]))];
+		
+		    uniqueStudents.forEach(student => {
+		        const option = document.createElement('option');
+		        option.value = student;
+		        option.textContent = student;
+		        select.appendChild(option);
+		    });
+		
+		    // 監聽選擇改變事件
+		    select.addEventListener('change', function() {
+		        if (this.value === 'ALL') {
+		            renderTable(allData);
+		        } else {
+		            const filteredData = allData.filter(row => row[1] === this.value);
+		            renderTable(filteredData);
+		        }
+		    });
 		}
-
+		
 		// 將數據渲染到表格
 		function renderTable(data) {
-			const tbody = document.getElementById('tableBody');
-			const countDisplay = document.getElementById('recordCount');
-			
-			tbody.innerHTML = ''; // 清空舊數據
-			countDisplay.innerText = `目前顯示：${data.length} 條錯題紀錄`;
-
-			data.forEach(row => {
-				const tr = document.createElement('tr');
-				
-				// 根據你 Sheet 嘅標題名稱讀取
-				const timeStr = row['時間戳記'] || '-';
-				const student = row['學生帳號'] || '-';
-				const question = row['答錯題目'] || '-';
-				const wrongAns = row['錯誤選項'] || '-';
-
-				tr.innerHTML = `
-					<td style="color: #a0a0a0; font-size: 0.9em;">${timeStr}</td>
-					<td style="font-weight: bold; color: #ffffff;">${student}</td>
-					<td>${question}</td>
-					<td style="color: #FF5555;">${wrongAns}</td>
-				`;
-				tbody.appendChild(tr);
-			});
+		    const tbody = document.getElementById('tableBody');
+		    const countDisplay = document.getElementById('recordCount');
+		
+		    tbody.innerHTML = ''; // 清空舊數據
+		    countDisplay.innerText = `目前顯示：${data.length} 條錯題紀錄`;
+		
+		    data.forEach(row => {
+		        const tr = document.createElement('tr');
+		
+		        // 根據欄位位置讀取 (A欄=0, B欄=1, C欄=2, D欄=3)
+		        const timeStr = row[0] || '-';
+		        const student = row[1] || '-';
+		        const question = row[2] || '-';
+		        const wrongAns = row[3] || '-';
+		
+		        tr.innerHTML = `
+		            <td style="color: #a0a0a0; font-size: 0.9em;">${timeStr}</td>
+		            <td style="font-weight: bold; color: #ffffff;">${student}</td>
+		            <td>${question}</td>
+		            <td style="color: #FF5555;">${wrongAns}</td>
+		        `;
+		        tbody.appendChild(tr);
+		    });
 		}
     </script>
 
