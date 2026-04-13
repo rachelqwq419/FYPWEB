@@ -5,101 +5,169 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AS WE LEARN - 教師後台</title>
     <style>
+        :root {
+            --primary: #9370db;
+            --primary-glow: rgba(147, 112, 219, 0.6);
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #1a1a1d;
+            /* 升級背景：深色徑向漸變，更有層次感 */
+            background: radial-gradient(circle at center, #2a2a35 0%, #121215 100%);
             color: #ffffff;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
         }
+
+        /* 升級：毛玻璃特效卡片 */
+        .glass-card {
+            background: rgba(30, 30, 36, 0.6);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 50px 40px;
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            /* 進場動畫 */
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 升級：遊戲 Icon 樣式 */
+        .game-icon {
+            width: 160px;
+            height: 160px;
+            border-radius: 25px;
+            object-fit: cover;
+            box-shadow: 0 0 30px var(--primary-glow);
+            margin-bottom: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
+        }
+
+        .game-icon:hover {
+            transform: scale(1.08) translateY(-5px);
+            box-shadow: 0 10px 40px rgba(221, 160, 221, 0.8);
+        }
+
+        /* 升級：漸變文字標題 */
         h1 {
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-            letter-spacing: 2px;
+            font-size: 3rem;
+            margin-bottom: 0.2rem;
+            letter-spacing: 3px;
+            background: linear-gradient(90deg, #dda0dd, #9370db);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
         }
-        p {
-            color: #a0a0a0;
-            margin-bottom: 2rem;
+
+        p.subtitle {
+            color: #b0b0b0;
+            margin-bottom: 2.5rem;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
         }
+
         .button-container {
             display: flex;
             gap: 20px;
             flex-wrap: wrap;
             justify-content: center;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
+
         .btn {
-            background-color: #33333b;
+            background-color: rgba(51, 51, 59, 0.8);
             color: white;
             text-decoration: none;
-            padding: 20px 40px;
-            border-radius: 10px;
-            font-size: 1.2rem;
+            padding: 18px 35px;
+            border-radius: 12px;
+            font-size: 1.15rem;
             font-weight: bold;
             transition: all 0.3s ease;
-            border: 2px solid transparent;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
-        /* 各科專屬顏色 Hover 特效 */
-        .btn-chinese:hover { background-color: #FF5555; border-color: #FF9999; transform: translateY(-5px); }
-        .btn-english:hover { background-color: #D4AF37; border-color: #FFFF99; transform: translateY(-5px); }
-        .btn-math:hover { background-color: #4B8BBE; border-color: #99CCFF; transform: translateY(-5px); }
+
+        /* 各科按鈕 Hover 特效增強 */
+        .btn-chinese:hover { background-color: #FF5555; border-color: #FF9999; transform: translateY(-5px); box-shadow: 0 10px 20px rgba(255, 85, 85, 0.3); }
+        .btn-english:hover { background-color: #D4AF37; border-color: #FFFF99; transform: translateY(-5px); box-shadow: 0 10px 20px rgba(212, 175, 55, 0.3); }
+        .btn-math:hover { background-color: #4B8BBE; border-color: #99CCFF; transform: translateY(-5px); box-shadow: 0 10px 20px rgba(75, 139, 190, 0.3); }
         
-        /* 🔥 新增：數據分析專屬按鈕特效 */
         .dashboard-container {
             width: 100%;
-            max-width: 700px;
             display: flex;
             justify-content: center;
         }
+
+        /* 數據分析按鈕加大、加強發光 */
         .btn-dashboard {
-            background-color: #6a0dad; /* 紫色 */
+            background: linear-gradient(135deg, #6a0dad, #9370db);
             width: 100%;
+            max-width: 600px;
             justify-content: center;
+            border: none;
+            padding: 22px;
+            font-size: 1.3rem;
+            box-shadow: 0 8px 20px rgba(106, 13, 173, 0.4);
         }
+
         .btn-dashboard:hover {
-            background-color: #9370db;
-            border-color: #dda0dd;
+            background: linear-gradient(135deg, #7b1fa2, #ab82ff);
             transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(147, 112, 219, 0.6);
         }
 
         .footer {
             margin-top: 3rem;
-            font-size: 0.8rem;
-            color: #555;
+            font-size: 0.85rem;
+            color: #666;
+            letter-spacing: 1px;
         }
     </style>
 </head>
 <body>
 
-    <h1>AS WE LEARN</h1>
-    <p>教師專屬題庫管理系統 (Teacher Control Panel)</p>
-
-    <div class="button-container">
-        <a href="https://docs.google.com/forms/d/e/1FAIpQLSd7iWdCedejj6sdjP7lPYOY08ZEpK9DpUapF7Ju9Pq9wdzLPA/viewform?usp=dialog" target="_blank" class="btn btn-chinese">
-            📝 中文科出題
-        </a>
+    <div class="glass-card">
+        <img src="AS_WE_LREAN.png" alt="AS WE LEARN Game Icon" class="game-icon">
         
-        <a href="https://docs.google.com/forms/d/e/1FAIpQLSerV71v7rfqXWyXnsOi6agXbuKoks4CIY3njTLwMlLDbbXQFA/viewform?usp=publish-editor" target="_blank" class="btn btn-english">
-            🔡 英文科出題
-        </a>
-        
-        <a href="https://docs.google.com/forms/d/e/1FAIpQLSctkXGABSQpk8STsYI6NpZuUCtkopMjoWdj1sT6KOYY204BnQ/viewform?usp=publish-editor" target="_blank" class="btn btn-math">
-            📐 數學科出題
-        </a>
-    </div>
+        <h1>AS WE LEARN</h1>
+        <p class="subtitle">教師專屬題庫管理系統 (Teacher Control Panel)</p>
 
-	<div class="dashboard-container">
-        <a href="dashboard.html" class="btn btn-dashboard">
-            📊 學生表現數據分析 (Student Performance Dashboard)
-        </a>
+        <div class="button-container">
+            <a href="https://docs.google.com/forms/d/e/1FAIpQLSd7iWdCedejj6sdjP7lPYOY08ZEpK9DpUapF7Ju9Pq9wdzLPA/viewform?usp=dialog" target="_blank" class="btn btn-chinese">
+                📝 中文科出題
+            </a>
+            
+            <a href="https://docs.google.com/forms/d/e/1FAIpQLSerV71v7rfqXWyXnsOi6agXbuKoks4CIY3njTLwMlLDbbXQFA/viewform?usp=publish-editor" target="_blank" class="btn btn-english">
+                🔡 英文科出題
+            </a>
+            
+            <a href="https://docs.google.com/forms/d/e/1FAIpQLSctkXGABSQpk8STsYI6NpZuUCtkopMjoWdj1sT6KOYY204BnQ/viewform?usp=publish-editor" target="_blank" class="btn btn-math">
+                📐 數學科出題
+            </a>
+        </div>
+
+        <div class="dashboard-container">
+            <a href="dashboard.html" class="btn btn-dashboard">
+                📊 學生表現數據分析 (Student Performance Dashboard)
+            </a>
+        </div>
     </div>
 
     <div class="footer">
