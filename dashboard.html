@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AS WE LEARN - Dashboard</title>
+    <link rel="icon" type="image/x-icon" href="AS_WE_LREAN.png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -102,6 +103,7 @@
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #333; }
         
+        /* 🔥 排序表頭樣式 */
         th { 
             color: var(--primary); 
             font-weight: bold; 
@@ -122,14 +124,14 @@
 <body>
 
     <div class="dashboard-container">
-        
         <div class="header">
             <div class="header-left">
+                
                 <a href="index.html" class="btn-back" data-i18n="backBtn">← 返回教師後台</a>
                 <h1 class="title" data-i18n="mainTitle">AS WE LEARN 數據分析</h1>
             </div>
             <div class="header-right">
-                <div id="statusIndicator" style="color: #4CAF50; font-size: 0.9em;" data-i18n="statusConnected">● System Connected</div>
+                <div id="statusIndicator" style="color: #4CAF50; font-size: 0.9em;" data-i18n="statusConnected">● 系統已連線</div>
                 <button class="btn-lang" id="langToggle" onclick="toggleLanguage()">🌐 EN</button>
             </div>
         </div>
@@ -202,9 +204,13 @@
                             <th id="colStudent" onclick="requestSort(1)">
                                 <span data-i18n="thStudent">學生帳號</span><span class="sort-icon" id="icon1"></span>
                             </th>
-                            <th><span data-i18n="thQuestion">答錯題目</span></th>
+                            <th onclick="requestSort(2)">
+                                <span data-i18n="thQuestion">答錯題目</span><span class="sort-icon" id="icon2"></span>
+                            </th>
                             <th><span data-i18n="thWrongAns">錯誤選項</span></th>
-                            <th><span data-i18n="thSubject">科目</span></th>
+                            <th onclick="requestSort(4)">
+                                <span data-i18n="thSubject">科目</span><span class="sort-icon" id="icon4"></span>
+                            </th>
                         </tr>
                     </thead>
                     <tbody id="tableBody"></tbody>
@@ -241,7 +247,6 @@
         };
 
         let currentLang = 'zh';
-        // 🔗 確保呢條 CSV Link 對應你加咗「科目」欄位後嘅 Google Sheet
         const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSvzNQagZWaguDWjTGY98muI3EqP578fvCVEkl1B-XeWjuYb0v-J198SKqbbQxHA2NamlRxcEitj-ks/pub?gid=643302752&single=true&output=csv';
 
         let allData = [];
@@ -297,7 +302,6 @@
             updateStudentDropdown('ALL');
             updateDashboard(allData);
 
-            // 🔥 註冊事件
             document.getElementById('subjectFilter').addEventListener('change', handleFilter);
             document.getElementById('classFilter').addEventListener('change', function() {
                 updateStudentDropdown(this.value);
@@ -330,6 +334,7 @@
             });
         }
 
+        // 🔥 排序控制：點擊表頭觸發
         function requestSort(index) {
             if (currentSort.index === index) {
                 currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
@@ -338,7 +343,7 @@
                 currentSort.direction = 'asc';
             }
             updateSortIcons();
-            handleFilter();
+            handleFilter(); // 重新過濾並執行排序
         }
 
         function updateSortIcons() {
@@ -355,9 +360,9 @@
             const stu = document.getElementById('studentFilter').value;
             const key = document.getElementById('searchBox').value.toLowerCase();
 
-            let data = allData;
+            let data = [...allData];
 
-            // 🔥 1. 科目篩選 (判斷第 5 欄)
+            // 1. 科目篩選
             if (sub !== 'ALL') {
                 data = data.filter(r => {
                     const colSub = r[4] ? r[4].toLowerCase() : '';
@@ -374,14 +379,16 @@
             // 4. 關鍵字搜尋
             if (key) data = data.filter(r => (r[2] && r[2].toLowerCase().includes(key)) || (r[3] && r[3].toLowerCase().includes(key)));
 
-            // 5. 排序
+            // 🔥 5. 排序邏輯 (一樣嘅會排埋一齊)
             if (currentSort.index !== null) {
                 data.sort((a, b) => {
                     let valA = (a[currentSort.index] || "").toString();
                     let valB = (b[currentSort.index] || "").toString();
+                    
+                    // 使用 localeCompare 處理中英文排序，確保一致性
                     return currentSort.direction === 'asc' 
-                        ? valA.localeCompare(valB, undefined, {numeric: true}) 
-                        : valB.localeCompare(valA, undefined, {numeric: true});
+                        ? valA.localeCompare(valB, 'zh-HK', {numeric: true}) 
+                        : valB.localeCompare(valA, 'zh-HK', {numeric: true});
                 });
             }
 
@@ -415,7 +422,7 @@
                     <td style="font-weight: bold;">${r[1] || '-'}</td>
                     <td>${r[2] || '-'}</td>
                     <td style="color: #FF5555;">${r[3] || '-'}</td>
-                    <td style="color: var(--primary); font-size: 0.9em;">${r[4] || '-'}</td>
+                    <td style="color: var(--primary); font-weight: bold;">${r[4] || '-'}</td>
                 `;
                 tb.appendChild(tr);
             });
