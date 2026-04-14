@@ -102,7 +102,6 @@
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #333; }
         
-        /* 🔥 排序表頭樣式 */
         th { 
             color: var(--primary); 
             font-weight: bold; 
@@ -164,6 +163,16 @@
                     <h3 style="margin-top: 0; color: #dda0dd;" data-i18n="filterTitle">⚙️ 數據篩選器</h3>
                     
                     <div>
+                        <label for="subjectFilter" data-i18n="filterSubject">📖 按科目篩選：</label>
+                        <select id="subjectFilter">
+                            <option value="ALL" data-i18n="optAllSubjects">所有科目 (All Subjects)</option>
+                            <option value="Chinese">中文科 (Chinese)</option>
+                            <option value="English">英文科 (English)</option>
+                            <option value="Math">數學科 (Math)</option>
+                        </select>
+                    </div>
+
+                    <div>
                         <label for="classFilter" data-i18n="filterClass">🏫 按班別篩選：</label>
                         <select id="classFilter"></select>
                     </div>
@@ -195,6 +204,7 @@
                             </th>
                             <th><span data-i18n="thQuestion">答錯題目</span></th>
                             <th><span data-i18n="thWrongAns">錯誤選項</span></th>
+                            <th><span data-i18n="thSubject">科目</span></th>
                         </tr>
                     </thead>
                     <tbody id="tableBody"></tbody>
@@ -210,31 +220,32 @@
                 backBtn: "← 返回教師後台", mainTitle: "AS WE LEARN 數據分析", statusConnected: "● 系統已連線",
                 loadingData: "正在從 Google 雲端同步最新數據...", kpiTotal: "總錯題紀錄數", kpiStudents: "學生遊玩人數",
                 kpiTopError: "最高頻錯題", chartTitle: "📊 高頻錯題排行榜", filterTitle: "⚙️ 數據篩選器",
-                filterClass: "🏫 按班別篩選：", filterStudent: "👨‍🎓 按學生帳號篩選：", filterSearch: "🔍 關鍵字搜尋 (題目 / 答案)：",
-                filterHint: "* 圖表與表格會根據篩選條件即時更新。", thTime: "時間戳記", thStudent: "學生帳號",
-                thQuestion: "答錯題目", thWrongAns: "錯誤選項", optAllClasses: "顯示所有班別 (全校數據)",
-                optAllStudents: "顯示所有學生", searchPlaceholder: "輸入關鍵字...", independent: "獨立帳號 (無班別)",
+                filterSubject: "📖 按科目篩選：", filterClass: "🏫 按班別篩選：", filterStudent: "👨‍🎓 按學生帳號篩選：", 
+                filterSearch: "🔍 關鍵字搜尋 (題目 / 答案)：", filterHint: "* 圖表與表格會根據篩選條件即時更新。", 
+                thTime: "時間戳記", thStudent: "學生帳號", thQuestion: "答錯題目", thWrongAns: "錯誤選項", thSubject: "科目",
+                optAllClasses: "顯示所有班別 (全校數據)", optAllStudents: "顯示所有學生", optAllSubjects: "所有科目 (All Subjects)",
+                searchPlaceholder: "輸入關鍵字...", independent: "獨立帳號 (無班別)",
                 noData: "⚠️ 成功連接，但表內沒有數據。", netError: "❌ 網絡連線失敗，請檢查 CSV 連結。", chartLabel: "答錯次數"
             },
             en: {
                 backBtn: "← Back to Portal", mainTitle: "AS WE LEARN Analytics", statusConnected: "● System Online",
                 loadingData: "Syncing data from Google Cloud...", kpiTotal: "Total Error Records", kpiStudents: "Active Students",
                 kpiTopError: "Most Frequent Error", chartTitle: "📊 Top Errors Leaderboard", filterTitle: "⚙️ Data Filters",
-                filterClass: "🏫 Filter by Class:", filterStudent: "👨‍🎓 Filter by Student:", filterSearch: "🔍 Keyword Search (Q&A):",
-                filterHint: "* Charts and tables update instantly based on filters.", thTime: "Timestamp", thStudent: "Student ID",
-                thQuestion: "Question", thWrongAns: "Wrong Answer", optAllClasses: "All Classes (School Data)",
-                optAllStudents: "All Students", searchPlaceholder: "Enter keywords...", independent: "Independent (No Class)",
+                filterSubject: "📖 Filter by Subject:", filterClass: "🏫 Filter by Class:", filterStudent: "👨‍🎓 Filter by Student:", 
+                filterSearch: "🔍 Keyword Search (Q&A):", filterHint: "* Charts and tables update instantly based on filters.", 
+                thTime: "Timestamp", thStudent: "Student ID", thQuestion: "Question", thWrongAns: "Wrong Answer", thSubject: "Subject",
+                optAllClasses: "All Classes (School Data)", optAllStudents: "All Students", optAllSubjects: "All Subjects",
+                searchPlaceholder: "Enter keywords...", independent: "Independent (No Class)",
                 noData: "⚠️ Connected, but no data available.", netError: "❌ Connection failed, check CSV link.", chartLabel: "Error Count"
             }
         };
 
         let currentLang = 'zh';
+        // 🔗 確保呢條 CSV Link 對應你加咗「科目」欄位後嘅 Google Sheet
         const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSvzNQagZWaguDWjTGY98muI3EqP578fvCVEkl1B-XeWjuYb0v-J198SKqbbQxHA2NamlRxcEitj-ks/pub?gid=643302752&single=true&output=csv';
 
         let allData = [];
         let chartInstance = null;
-        
-        // 🔥 排序狀態
         let currentSort = { index: null, direction: 'asc' };
 
         function toggleLanguage() {
@@ -246,9 +257,11 @@
             });
             document.getElementById('searchBox').placeholder = dict[currentLang].searchPlaceholder;
             if (allData.length > 0) {
+                const curSub = document.getElementById('subjectFilter').value;
                 const curClass = document.getElementById('classFilter').value;
                 const curStudent = document.getElementById('studentFilter').value;
                 populateClassFilter();
+                document.getElementById('subjectFilter').value = curSub;
                 document.getElementById('classFilter').value = curClass;
                 updateStudentDropdown(curClass);
                 document.getElementById('studentFilter').value = curStudent;
@@ -284,6 +297,8 @@
             updateStudentDropdown('ALL');
             updateDashboard(allData);
 
+            // 🔥 註冊事件
+            document.getElementById('subjectFilter').addEventListener('change', handleFilter);
             document.getElementById('classFilter').addEventListener('change', function() {
                 updateStudentDropdown(this.value);
                 handleFilter();
@@ -315,7 +330,6 @@
             });
         }
 
-        // 🔥 排序處理函數
         function requestSort(index) {
             if (currentSort.index === index) {
                 currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
@@ -336,16 +350,31 @@
         }
 
         function handleFilter() {
+            const sub = document.getElementById('subjectFilter').value;
             const cls = document.getElementById('classFilter').value;
             const stu = document.getElementById('studentFilter').value;
             const key = document.getElementById('searchBox').value.toLowerCase();
 
             let data = allData;
+
+            // 🔥 1. 科目篩選 (判斷第 5 欄)
+            if (sub !== 'ALL') {
+                data = data.filter(r => {
+                    const colSub = r[4] ? r[4].toLowerCase() : '';
+                    return colSub.includes(sub.toLowerCase());
+                });
+            }
+
+            // 2. 班別篩選
             if (cls !== 'ALL') data = data.filter(r => getClassFromStudent(r[1]) === cls);
+            
+            // 3. 學生篩選
             if (stu !== 'ALL') data = data.filter(r => r[1] === stu);
+            
+            // 4. 關鍵字搜尋
             if (key) data = data.filter(r => (r[2] && r[2].toLowerCase().includes(key)) || (r[3] && r[3].toLowerCase().includes(key)));
 
-            // 🔥 執行排序
+            // 5. 排序
             if (currentSort.index !== null) {
                 data.sort((a, b) => {
                     let valA = (a[currentSort.index] || "").toString();
@@ -381,7 +410,13 @@
             tb.innerHTML = '';
             data.forEach(r => {
                 const tr = document.createElement('tr');
-                tr.innerHTML = `<td style="color: #a0a0a0; font-size: 0.85em;">${r[0] || '-'}</td><td style="font-weight: bold;">${r[1] || '-'}</td><td>${r[2] || '-'}</td><td style="color: #FF5555;">${r[3] || '-'}</td>`;
+                tr.innerHTML = `
+                    <td style="color: #a0a0a0; font-size: 0.85em;">${r[0] || '-'}</td>
+                    <td style="font-weight: bold;">${r[1] || '-'}</td>
+                    <td>${r[2] || '-'}</td>
+                    <td style="color: #FF5555;">${r[3] || '-'}</td>
+                    <td style="color: var(--primary); font-size: 0.9em;">${r[4] || '-'}</td>
+                `;
                 tb.appendChild(tr);
             });
         }
